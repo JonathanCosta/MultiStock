@@ -63,4 +63,92 @@ class FireGento_MultiStock_Model_Stock extends Mage_CatalogInventory_Model_Stock
 
         return $this;
     }
+
+    /**
+     * Prepare array($productId=>$qty) based on array($productId => array('qty'=>$qty, 'item'=>$stockItem))
+     *
+     * @param array $items
+     * @return array
+     */
+    protected function _prepareProductQtys($items)
+    {
+        Mage::register('stock_items', $items, true);
+        $qtys = array();
+        foreach ($items as $productId => $item) {
+            if (empty($item['item'])) {
+                $stockItem = Mage::getModel('cataloginventory/stock_item')->loadByProduct($productId);
+            } else {
+                $stockItem = $item['item'];
+            }
+            $canSubtractQty = $stockItem->getId() && $stockItem->canSubtractQty();
+            if ($canSubtractQty && Mage::helper('catalogInventory')->isQty($stockItem->getTypeId())) {
+                $qtys[$productId] = $item['qty'];
+            }
+        }
+        return $qtys;
+    }
+
+    /**
+     * Add stock item objects to products
+     *
+     * @param   Varien_Data_Collection $productCollection
+     * @return  Mage_CatalogInventory_Model_Stock
+     */
+    public function addItemsToProducts($productCollection)
+    {
+        $items      = $this->getItemCollection()
+            ->addProductsFilter($productCollection)
+            ->joinStockStatus($productCollection->getStoreId())
+            ->load();
+        $stockItems = array();
+        /** @var FireGento_MultiStock_Model_Stock_Item $item */
+        foreach ($items as $item) {
+            if (!isset($stockItems[$item->getProductId()])) {
+                $stockItems[$item->getProductId()] = $item;
+            } elseif ($item->getStockId() == self::DEFAULT_STOCK_ID && $item->getIsInStock()) {
+                $stockItems[$item->getProductId()] = $item;
+            } elseif (!$stockItems[$item->getProductId()]->getIsInStock() && $item->getIsInStock()) {
+                $stockItems[$item->getProductId()] = $item;
+            }
+        }
+        foreach ($productCollection as $product) {
+            if (isset($stockItems[$product->getId()])) {
+                $stockItems[$product->getId()]->assignProduct($product);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Subtract product qtys from stock.
+     * Return array of items that require full save
+     *
+     * @param array $items
+     * @return array
+     */
+    public function registerProductsSale($items)
+    {
+        $qtys = $this->_prepareProductQtys($items);
+        $item = Mage::getModel('cataloginventory/stock_item');
+        $this->_getResource()->beginTransaction();
+        $stockInfo     = $this->_getResource()->getProductsStock($this, array_keys($qtys), true);
+        $fullSaveItems = array();
+        foreach ($stockInfo as $itemInfo) {
+            $item->setData($itemInfo);
+            if (!isset($qtys[$item->getProductId()])) {
+                continue;
+            }
+            if (!$item->checkQty($qtys[$item->getProductId()])) {
+                $this->_getResource()->commit();
+                Mage::throwException(Mage::helper('cataloginventory')->__('Not all products are available in the requested quantity'));
+            }
+            $item->subtractQty($qtys[$item->getProductId()]);
+            if (!$item->verifyStock() || $item->verifyNotification()) {
+                $fullSaveItems[] = clone $item;
+            }
+        }
+        $this->_getResource()->correctItemsQty($this, $qtys, '-');
+        $this->_getResource()->commit();
+        return $fullSaveItems;
+    }
 }

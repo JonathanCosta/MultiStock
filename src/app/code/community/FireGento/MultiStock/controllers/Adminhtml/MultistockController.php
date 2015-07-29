@@ -38,7 +38,7 @@ class FireGento_MultiStock_Adminhtml_MultistockController extends Mage_Adminhtml
         if (!Mage::registry('product')) {
             $productId = (int)$this->getRequest()->getParam('id');
             /** @var $product Mage_Catalog_Model_Product */
-            $product   = Mage::getModel('catalog/product')->setStoreId($this->getRequest()->getParam('store', 0));
+            $product = Mage::getModel('catalog/product')->setStoreId($this->getRequest()->getParam('store', 0));
             if ($productId) {
                 $product->load($productId);
                 Mage::register('product', $product);
@@ -80,9 +80,7 @@ class FireGento_MultiStock_Adminhtml_MultistockController extends Mage_Adminhtml
         /* @var $stockCollection FireGento_MultiStock_Model_Resource_Stock_Collection */
         $stockCollection->joinStockItemsForProduct($product);
 
-        foreach (
-            $stockCollection as $stock
-        ) {
+        foreach ($stockCollection as $stock) {
             /* @var $stock FireGento_MultiStock_Model_Stock */
             if (isset($postData[$stock->getId()])) {
                 $newData = $postData[$stock->getId()];

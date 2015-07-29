@@ -109,4 +109,16 @@ class FireGento_MultiStock_Model_Resource_Stock_Item_Collection
 
         return $this;
     }
+
+    /**
+     * Add stock filter to collection
+     * @changed: strip stockId filter from collection
+     *
+     * @param mixed $stock
+     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     */
+    public function addStockFilter($stock)
+    {
+        return $this;
+    }
 }

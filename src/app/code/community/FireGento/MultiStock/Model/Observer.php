@@ -26,7 +26,7 @@
  * @package  FireGento_MultiStock
  * @author   FireGento Team <team@firegento.com>
  */
-class FireGento_MultiStock_Model_Observer
+class FireGento_MultiStock_Model_Observer extends Mage_CatalogInventory_Model_Observer
 {
     /**
      * We need to put the main stock id into the indexing process. If we don't we get duplicate entries
@@ -42,6 +42,27 @@ class FireGento_MultiStock_Model_Observer
         //the prefix is hardcode because the root haven't a constant for that.
         $select->where('ciss.stock_id = ?', Mage_CatalogInventory_Model_Stock::DEFAULT_STOCK_ID);
 
+        return $this;
+    }
+
+    /**
+     * Add stock information to product
+     *
+     * @param   Varien_Event_Observer $observer
+     * @return  Mage_CatalogInventory_Model_Observer
+     */
+    public function addFrontendInventoryData($observer)
+    {
+        $product = $observer->getEvent()->getProduct();
+        if ($product instanceof Mage_Catalog_Model_Product) {
+            $productId = intval($product->getId());
+            if (!isset($this->_stockItemsArray[$productId])) {
+                $this->_stockItemsArray[$productId] = Mage::getModel('cataloginventory/stock_item');
+            }
+            /** @var FireGento_MultiStock_Model_Stock_Item $productStockItem */
+            $productStockItem = $this->_stockItemsArray[$productId];
+            $productStockItem->assignProductOnFrontend($product);
+        }
         return $this;
     }
 }

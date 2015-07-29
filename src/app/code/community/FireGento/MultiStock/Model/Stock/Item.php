@@ -42,4 +42,25 @@ class FireGento_MultiStock_Model_Stock_Item extends Mage_CatalogInventory_Model_
         return $this->getData('stock_id');
     }
 
+    /**
+     * Adding stock data to product
+     *
+     * @param   Mage_Catalog_Model_Product $product
+     * @return  Mage_CatalogInventory_Model_Stock_Item
+     */
+    public function assignProductOnFrontend(Mage_Catalog_Model_Product $product)
+    {
+        if (!$this->getId() || !$this->getProductId()) {
+            $this->_getResource()->loadByProductIdOnFrontend($this, $product->getId());
+            $this->setOrigData();
+        }
+
+        $this->setProduct($product);
+        $product->setStockItem($this);
+
+        $product->setIsInStock($this->getIsInStock());
+        Mage::getSingleton('cataloginventory/stock_status')
+            ->assignProduct($product, $this->getStockId(), $this->getStockStatus());
+        return $this;
+    }
 }
