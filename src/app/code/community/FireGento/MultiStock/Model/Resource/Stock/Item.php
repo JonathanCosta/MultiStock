@@ -41,10 +41,10 @@ class FireGento_MultiStock_Model_Resource_Stock_Item extends Mage_CatalogInvento
      */
     public function loadByProductIdOnFrontend(Mage_CatalogInventory_Model_Stock_Item $item, $productId)
     {
-        $select = $this->_getLoadSelect('product_id', $productId, $item)
-            ->order('is_in_stock', Varien_Data_Collection::SORT_ORDER_ASC)
-            ->order('stock_id', Varien_Data_Collection::SORT_ORDER_ASC);
-        $data   = $this->_getReadAdapter()->fetchRow($select);
+        $select = $this->_getLoadSelect('product_id', $productId, $item);
+        $select->order('is_in_stock DESC');
+
+        $data = $this->_getReadAdapter()->fetchRow($select);
         if ($data) {
             $item->setData($data);
         }
