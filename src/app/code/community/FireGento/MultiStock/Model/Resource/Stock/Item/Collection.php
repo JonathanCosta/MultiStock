@@ -39,7 +39,7 @@ class FireGento_MultiStock_Model_Resource_Stock_Item_Collection
     {
         $this->getSelect()->joinLeft(
             array('stock_table' => $this->getTable('cataloginventory/stock')),
-            '`main_table`.`stock_id`=`stock_table`.`stock_id`', array('stock_name')
+            'main_table.stock_id=stock_table.stock_id', array('stock_name')
         );
 
         return $this;
