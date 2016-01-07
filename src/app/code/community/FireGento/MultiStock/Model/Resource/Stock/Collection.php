@@ -41,7 +41,7 @@ class FireGento_MultiStock_Model_Resource_Stock_Collection extends Mage_Core_Mod
      */
     public function excludeDefaultStock()
     {
-        $this->addFieldToFilter('`main_table`.`stock_id`', array('gt' => 1));
+        $this->addFieldToFilter('main_table.stock_id', array('gt' => 1));
     }
 
     /**
@@ -56,8 +56,8 @@ class FireGento_MultiStock_Model_Resource_Stock_Collection extends Mage_Core_Mod
         $this->getSelect()->joinLeft(
             array('stock_item_table' => $this->getTable('cataloginventory/stock_item')), implode(
                 ' AND ',
-                array('`main_table`.`stock_id` = `stock_item_table`.`stock_id`', $this->getConnection()->quoteInto(
-                    '`stock_item_table`.`product_id` = ?', $product->getId()
+                array('main_table.stock_id = stock_item_table.stock_id', $this->getConnection()->quoteInto(
+                    'stock_item_table.product_id = ?', $product->getId()
                 ))
             ), array('item_id'     => 'item_id', 'qty' => 'IF (qty IS NULL,0,qty)',
                      'is_in_stock' => 'IF (is_in_stock IS NULL,0,is_in_stock)',
